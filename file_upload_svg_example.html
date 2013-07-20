@@ -21,7 +21,7 @@
         var $waveform = $('.waveform');
         
         // create the wavdraw object
-        var wd = WavDraw($waveform[0], {width:$waveform.width(), height:$waveform.height(), loadingStrokeColor:"#4d4d4d", strokeColor:"#8b8b8b", strokeWidth: 1}); 
+        var wd = WavDraw($waveform[0], {width:$waveform.width(), height:$waveform.height(), useLoading: true, loadingStrokeColor:"#4d4d4d", strokeColor:"#8b8b8b", strokeWidth: 1}); 
 
         // fetch the downsampled pcm
         var request = new XMLHttpRequest();
