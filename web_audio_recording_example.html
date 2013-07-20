@@ -3,8 +3,8 @@
     <style>
       img { background: blue; }
     </style>
-    <script src="/scripts/jquery.js"></script>
-    <script src="/scripts/recorder.js"></script>
+    <script src="scripts/jquery.js"></script>
+    <script src="scripts/recorder.js"></script>
   </head>
   <body>
     <h1>Web Audio Recording Example</h1>
@@ -25,12 +25,15 @@
           var formData = new FormData();
 
           // make sure api key is added to the form first
-          formData.append('apiKey', '$2a$10$nAheSfXghsMuAaGeN3qobeGq6actJcvh9jf/v6qEioMv4jE4pWw5u');
+          formData.append('apiKey', '$2a$10$vYre/YazJTlSQH9gW88pKOeRDh5JpmP2tyyfRqZYHMbphF6OYE3Sa');
           
           // create track object
           track = {
             'name': 'microphoneexample.wav', // REQUIRED
             'type': 'sample',  // options are 'stem', 'loop', or 'sample'. REQUIRED
+            // 'bpm': 140, // OPTIONAL
+            // 'key': 'C minor', // OPTIONAL
+            // 'tags': ['synth', 'electronica'] // OPTIONAL
           }
 
           // stringify track to json and attach to form data
@@ -42,7 +45,9 @@
           // create xhr object
           var xhr = new XMLHttpRequest();
           xhr.open('POST', 'http://localhost:1337/upload', true);
-          // xhr.withCredentials = true;
+
+          // if withCredentials is true, the track will be owned by the user who is currently logged into soundkeep.com
+          xhr.withCredentials = true;
 
           // listen for when the file is done uploading
           xhr.onload = function(e) {
@@ -58,8 +63,6 @@
           xhr.upload.onprogress = function(e) {
             if (e.lengthComputable) {
               console.log('progress', e);
-              // progressBar.value = (e.loaded / e.total) * 100;
-              // progressBar.textContent = progressBar.value; // Fallback for unsupported browsers.
             }
           }
       
