@@ -1,0 +1,92 @@
+<html>
+  <head>
+    <style>
+      img { background: blue; }
+    </style>
+    <script src="/scripts/jquery.js"></script>
+    <script src="/scripts/recorder.js"></script>
+  </head>
+  <body>
+    <h1>Web Audio Recording Example</h1>
+    <a class="record" href="#">Record</a>
+    <a class="stop" href="#">Stop Recording</a>
+    
+    <script>
+        try {
+          // webkit shim
+          window.AudioContext = window.AudioContext || window.webkitAudioContext;
+          navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia;
+        } catch (e) {
+          alert('No web audio support in this browser!');
+        }
+
+        var uploadWav = function(wav) {
+          // create form
+          var formData = new FormData();
+
+          // make sure api key is added to the form first
+          formData.append('apiKey', '$2a$10$nAheSfXghsMuAaGeN3qobeGq6actJcvh9jf/v6qEioMv4jE4pWw5u');
+          
+          // create track object
+          track = {
+            'name': 'microphoneexample.wav', // REQUIRED
+            'type': 'sample',  // options are 'stem', 'loop', or 'sample'. REQUIRED
+          }
+
+          // stringify track to json and attach to form data
+          formData.append('track', JSON.stringify(track));
+
+          // attach audio file to form data.  be sure to pass the third file.name argument
+          formData.append('audio', wav, 'microphoneexample.wav');
+      
+          // create xhr object
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', 'http://localhost:1337/upload', true);
+          // xhr.withCredentials = true;
+
+          // listen for when the file is done uploading
+          xhr.onload = function(e) {
+            console.log('hooray', e);
+            var response = JSON.parse(this.response);
+            console.log(response);
+            $('body').append('<img src="http://waveforms.soundkeep.com/' + response.waveform + '">')
+            $('body').append('<audio src="http://tracks.soundkeep.com/' + response.path + '" controls></audio>')
+          };
+      
+          // Listen to the upload progress.
+          // var progressBar = document.querySelector('progress');
+          xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+              console.log('progress', e);
+              // progressBar.value = (e.loaded / e.total) * 100;
+              // progressBar.textContent = progressBar.value; // Fallback for unsupported browsers.
+            }
+          }
+      
+          // send request
+          xhr.send(formData);   
+        }
+
+        audioContext = new window.AudioContext();
+        
+        $('.record').bind('click', function(e) {
+          navigator.getUserMedia({audio: true}, function(stream) {
+            // create an audio node from user microphone stream
+            var mic = audioContext.createMediaStreamSource(stream);
+
+            // pass audio node to recorder.  this could be any node but happens to be the mic in this case
+            recorder = new Recorder(mic, {workerPath: '/scripts/recorder_worker.js'});
+            recorder.record();
+          });
+        });
+
+        $('.stop').bind('click', function(e) {
+          recorder.stop();
+          recorder.exportWAV(function(wav) {
+            uploadWav(wav);
+          });
+        });
+        
+    </script>
+  </body>
+</html>

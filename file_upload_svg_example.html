@@ -1,0 +1,103 @@
+<html>
+  <head>
+    <script src="/scripts/jquery.js"></script>
+    <script src="/scripts/underscore.js"></script>
+    <script src="/scripts/raphael.js"></script>
+    <script src="/scripts/wavdraw.js"></script>
+    <style>
+      img { background: blue; }
+      .waveform { width: 500px; height: 100px; }
+    </style>
+  </head>
+  <body>
+    <h1>File Upload Example Using SVG Waveform</h1>
+    <input type="file" />
+
+    <script>
+      
+      var drawWaveform = function(url) {
+
+        // the waveform will be drawn to fit the size of this .waveform element.  Make sure it has a height and width.
+        var $waveform = $('.waveform');
+        
+        // create the wavdraw object
+        var wd = WavDraw($waveform[0], {width:$waveform.width(), height:$waveform.height(), loadingStrokeColor:"#4d4d4d", strokeColor:"#8b8b8b", strokeWidth: 1}); 
+
+        // fetch the downsampled pcm
+        var request = new XMLHttpRequest();
+        request.open('GET', url, true);
+        request.responseType = 'arraybuffer';
+
+        function onError(err) {
+          console.log(url + ' failed to load');
+        }
+
+        request.onload = function() {
+          // load the pcm data into the wavdraw object to be drawn in svg via raphael
+          wd.loadPCM(this.response);
+        }
+
+        request.send();
+
+      }
+      
+      $('input').bind('change', function(e) {
+        // get handle for the file
+        var file = e.target.files[0];
+        var type = $('.type').val();
+        var bpm = $('.bpm').val();
+
+        // create form
+        var formData = new FormData();
+
+        // append api key first
+        formData.append('apiKey', '$2a$10$nAheSfXghsMuAaGeN3qobeGq6actJcvh9jf/v6qEioMv4jE4pWw5u');
+
+        // create track object
+        track = {
+          'name': file.name, // REQUIRED
+          'type': type,  // options are 'stem', 'loop', or 'sample'. REQUIRED
+          'bpm': 140, // OPTIONAL
+          'key': 'C minor', // see options *below. OPTIONAL
+          'tags': ['synth', 'electronica'] // OPTIONAL
+        }
+
+        // stringify track to json and attach to form data
+        formData.append('track', JSON.stringify(track));
+
+        // attach audio file to form data.  be sure to pass the third file.name argument
+        formData.append('audio', file, file.name);
+      
+        // create xhr object
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'http://localhost:1337/upload', true);
+
+        // listen for when the file is done uploading
+        xhr.onload = function(e) {
+          console.log('hooray', e);
+          var response = JSON.parse(this.response);
+          console.log(response);
+          // append place holder elelemt for the waveform to be drawn in
+          $('body').append('<div class="waveform">');
+          // append audio tag.
+          $('body').append('<audio src="http://tracks.soundkeep.com/' + response.path + '" controls></audio>');
+          // fetch and draw waveform
+          drawWaveform('http://downsamples.soundkeep.com/' + response.downsample);
+        };
+      
+        // Listen to the upload progress.
+        // var progressBar = document.querySelector('progress');
+        xhr.upload.onprogress = function(e) {
+          if (e.lengthComputable) {
+            console.log('progress', e);
+            // progressBar.value = (e.loaded / e.total) * 100;
+            // progressBar.textContent = progressBar.value; // Fallback for unsupported browsers.
+          }
+        }
+      
+        // send request
+        xhr.send(formData);    
+      });
+    </script>
+  </body>
+</html>
